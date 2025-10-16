@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>for you baby</title>
+<style>
+  :root{
+    --lav-bg1:#f3e7fb;
+    --lav-bg2:#e9defb;
+    --accent:#b48bed;
+    --deep:#6a2f86;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+    background:linear-gradient(180deg,#f7eefc 0%, #efe6fb 60%);
+    color:var(--deep);
+    overflow:hidden;
+  }
+
+  /* Screen containers */
+  .screen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity .7s ease, transform .7s ease}
+  .hidden{opacity:0;pointer-events:none;transform:scale(.995)}
+  .visible{opacity:1;pointer-events:auto;transform:scale(1)}
+
+  /* Intro */
+  .intro h1{font-size:28px;margin:0 0 8px;color:var(--deep);text-transform:lowercase;letter-spacing:.6px}
+  .intro p{margin:0;color:#6d4a7c}
+  .btn{background:linear-gradient(135deg,var(--accent),#d6b3ff);border:none;padding:12px 26px;border-radius:28px;color:#fff;font-weight:700;cursor:pointer;box-shadow:0 8px 28px rgba(106,47,134,0.16)}
+  .btn:active{transform:translateY(1px)}
+
+  /* envelope visuals */
+  .envelope-wrap{width:420px;max-width:88vw;height:280px;perspective:900px;display:flex;align-items:center;justify-content:center}
+  .envelope{
+    width:70%;max-width:360px;height:65%;position:relative;transform-style:preserve-3d;cursor:pointer;
+  }
+  .envelope .back{
+    position:absolute;inset:0;border-radius:12px;background:linear-gradient(180deg,#fff,#fbf5ff);box-shadow:0 14px 36px rgba(80,30,120,0.12);border:1px solid rgba(110,60,150,0.06);
+  }
+  .flap{
+    position:absolute;left:0;right:0;top:0;height:56%;border-top-left-radius:12px;border-top-right-radius:12px;border-bottom-left-radius:60% 18px;border-bottom-right-radius:60% 18px;
+    background:linear-gradient(135deg,#edd9ff,#d7bdf3);transform-origin:center bottom;transition:transform .85s cubic-bezier(.2,.9,.3,1);box-shadow:inset 0 2px 10px rgba(255,255,255,0.5)
+  }
+  .envelope.open .flap{transform:rotateX(-170deg)}
+
+  /* inner card area */
+  .card-inner{position:absolute;left:10px;right:10px;top:calc(56% + 8px);bottom:10px;border-radius:10px;background:#fffefc;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;overflow:hidden}
+  .photo img{width:100%;height:100%;object-fit:cover;border-radius:10px;opacity:0;transform:translateY(14px) scale(.98);transition:all .9s ease}
+  .photo.show img{opacity:1;transform:translateY(0) scale(1)}
+
+  .message-box{position:absolute;left:12px;right:12px;bottom:12px;padding:12px;background:linear-gradient(180deg,rgba(255,255,255,0.9),rgba(250,245,255,0.95));border-radius:10px;backdrop-filter:blur(3px);text-align:center;box-shadow:0 6px 18px rgba(110,60,150,0.06)}
+  .message{font-size:18px;color:#41204b;margin:0;opacity:0;transform:translateY(10px);transition:all .6s cubic-bezier(.2,.9,.3,1)}
+  .message.show{opacity:1;transform:translateY(0)}
+
+  /* slideshow area (fallback center) */
+  .slideshow-wrap{width:760px;max-width:94vw;display:flex;flex-direction:column;align-items:center;gap:12px}
+  .slides{position:relative;width:100%;height:420px;display:flex;align-items:center;justify-content:center}
+  .slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity .8s ease}
+  .slide.active{opacity:1}
+  .slide img{max-width:70%;max-height:62%;border-radius:16px;box-shadow:0 18px 46px rgba(80,30,120,0.18)}
+  .slide p{margin-top:14px;font-size:20px;color:#5b2a80;font-weight:600}
+
+  .controls{display:flex;gap:12px;align-items:center}
+  .ctrl-btn{background:transparent;border:1px solid rgba(90,40,130,0.08);padding:8px 12px;border-radius:10px;cursor:pointer;color:var(--deep);font-weight:600}
+
+  /* final gift scene */
+  .final-wrap{display:flex;flex-direction:column;align-items:center;gap:18px}
+  .gift{width:180px;height:160px;background:linear-gradient(180deg,#f7ecff,#eadcff);border-radius:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 18px 46px rgba(80,30,120,0.16);cursor:pointer;position:relative}
+  .gift .ribbon{position:absolute;left:0;right:0;top:28px;height:22px;background:linear-gradient(90deg,#d1a7ff,#b57edc)}
+  .flower-stage{width:240px;height:240px;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.95);transition:all .9s cubic-bezier(.2,.9,.3,1);pointer-events:none}
+  .flower-stage.show{opacity:1;transform:scale(1);pointer-events:auto}
+
+  /* CSS "real" rose built from layered petals + gradient shading */
+  .rose{position:relative;width:160px;height:160px;transform:translateY(0) scale(0.92);transition:transform .9s cubic-bezier(.2,.9,.3,1)}
+  .rose.show{transform:translateY(0) scale(1.0)}
+  .petal{position:absolute;left:50%;top:50%;transform-origin:0 0;border-radius:50% 40% 40% 50%/60% 40% 40% 60%;box-shadow:inset -6px -8px 14px rgba(0,0,0,0.12)}
+  /* center bloom with heavy shading */
+  .petal.center{width:40px;height:40px;margin-left:-20px;margin-top:-20px;background:radial-gradient(circle at 30% 30%, #ffdae1 0%, #ffb3cc 30%, #ff89b3 60%, #ef5e90 100%);z-index:8;transform:rotate(0deg)}
+  /* surrounding petals (layered and rotated for realistic shape) */
+  .petal.p1{width:90px;height:70px;margin-left:-45px;margin-top:-18px;background:radial-gradient(circle at 35% 30%, #ffdff0 0%, #ffbfe6 30%, #ff9ad1 60%, #d36a9e 100%);transform:rotate(-18deg) translate(-12px,-6px);z-index:7}
+  .petal.p2{width:90px;height:70px;margin-left:-45px;margin-top:-18px;background:radial-gradient(circle at 25% 20%, #ffe6f4 0%, #ffcbe9 30%, #ff9fd9 60%, #cc6aa9 100%);transform:rotate(18deg) translate(12px,-6px);z-index:6}
+  .petal.p3{width:110px;height:84px;margin-left:-55px;margin-top:-8px;background:linear-gradient(180deg,#ffd9ee,#f6b8e3);transform:rotate(-48deg) translate(-16px,2px);z-index:5}
+  .petal.p4{width:110px;height:84px;margin-left:-55px;margin-top:-8px;background:linear-gradient(180deg,#ffd9ee,#f6b8e3);transform:rotate(48deg) translate(16px,2px);z-index:4}
+  .petal.p5{width:130px;height:98px;margin-left:-65px;margin-top:8px;background:linear-gradient(180deg,#fcdffe,#eeb7e7);transform:rotate(-78deg) translate(-24px,6px);z-index:3}
+  .petal.p6{width:130px;height:98px;margin-left:-65px;margin-top:8px;background:linear-gradient(180deg,#fcdffe,#eeb7e7);transform:rotate(78deg) translate(24px,6px);z-index:2}
+
+  /* stem & leaves */
+  .stem{width:6px;height:120px;background:linear-gradient(180deg,#1e7a3a,#15592a);border-radius:6px;margin-top:6px;box-shadow:0 6px 12px rgba(0,0,0,0.08)}
+  .leaf{width:54px;height:30px;background:linear-gradient(180deg,#6cd08a,#2e8f4e);border-radius:20px;transform-origin:left center;margin:8px 0;box-shadow:inset 0 4px 12px rgba(0,0,0,0.06)}
+
+  .final-msg{font-size:20px;color:#4a1a5f;text-align:center;width:80%;max-width:560px;opacity:0;transform:translateY(12px);transition:all .8s ease}
+  .final-msg.show{opacity:1;transform:translateY(0)}
+
+  .sig{margin-top:10px;color:#6b3e86;font-style:italic}
+
+  /* responsive */
+  @media (max-width:720px){
+    .slideshow-wrap{width:92vw}
+    .slide img{max-width:86%}
+    .flower-stage{width:200px;height:200px}
+  }
+</style>
+</head>
+<body>
+
+  <!-- INTRO -->
+  <div id="intro" class="screen visible">
+    <div class="intro" style="text-align:center">
+      <h1>i have a surprise for you baby</h1>
+      <p>click open when you're ready 💌</p>
+      <button class="btn" id="openBtn">open</button>
+    </div>
+  </div>
+
+  <!-- ENVELOPE -->
+  <div id="envelopeScene" class="screen hidden">
+    <div style="text-align:center;margin-bottom:12px;color:#5b3a66">open it, baby — it’s for you</div>
+    <div class="envelope-wrap">
+      <div class="envelope" id="envelope">
+        <div class="flap"></div>
+        <div class="back"></div>
+        <div class="card-inner">
+          <div class="photo" id="photoContainer"><img id="slideImg" src="" alt="photo"></div>
+          <div class="message-box"><p class="message" id="msgEl"></p></div>
+        </div>
+      </div>
+    </div>
+    <div style="height:8px"></div>
+    <div style="text-align:center">
+      <button class="btn" id="openEnvelopeBtn">open envelope</button>
+    </div>
+  </div>
+
+  <!-- SLIDESHOW -->
+  <div id="slidesScreen" class="screen hidden">
+    <div class="slideshow-wrap">
+      <div class="slides" id="slides">
+        <div class="slide active" id="s0"><img src="images/baby1.jpg" alt=""><p>you're so beautiful</p></div>
+        <div class="slide" id="s1"><img src="images/baby2.jpg" alt=""><p>thank you for having me in your life</p></div>
+        <div class="slide" id="s2"><img src="images/baby3.jpg" alt=""><p>i love you so much my pretty gf</p></div>
+        <div class="slide" id="s3"><img src="images/baby4.jpg" alt=""><p>i hope we last together</p></div>
+      </div>
+
+      <div class="controls" style="margin-top:18px">
+        <button class="ctrl-btn" id="prevBtn">◀ prev</button>
+        <button class="ctrl-btn" id="nextBtn">next ▶</button>
+      </div>
+      <div class="signature" style="margin-top:10px">– jay</div>
+    </div>
+  </div>
+
+  <!-- FINAL BLOOM -->
+  <div id="finalScreen" class="screen hidden" style="flex-direction:column;gap:18px">
+    <div class="final-wrap">
+      <div style="text-align:center;color:#5b3a66;margin-bottom:6px">tap the gift to open</div>
+      <div class="gift" id="gift">
+        <div class="ribbon"></div>
+      </div>
+
+      <div class="flower-stage" id="flowerStage" aria-hidden="true">
+        <div class="rose" id="rose">
+          <div class="petal p6"></div>
+          <div class="petal p5"></div>
+          <div class="petal p4"></div>
+          <div class="petal p3"></div>
+          <div class="petal p2"></div>
+          <div class="petal p1"></div>
+          <div class="petal center"></div>
+        </div>
+        <div style="height:8px"></div>
+        <div class="stem" id="stem"></div>
+        <div class="leaf" style="transform:rotate(-18deg)"></div>
+      </div>
+
+      <div class="final-msg" id="finalMsg">for you baby, i love you always.</div>
+      <div class="sig">– jay</div>
+    </div>
+  </div>
+
+<script>
+  // slides config
+  const slides = [
+    { img: 'images/baby1.jpg', msg: "you're so beautiful" },
+    { img: 'images/baby2.jpg', msg: "thank you for having me in your life" },
+    { img: 'images/baby3.jpg', msg: "i love you so much my pretty gf" },
+    { img: 'images/baby4.jpg', msg: "i hope we last together" }
+  ];
+
+  // elements
+  const intro = document.getElementById('intro');
+  const envelopeScene = document.getElementById('envelopeScene');
+  const slidesScreen = document.getElementById('slidesScreen');
+  const finalScreen = document.getElementById('finalScreen');
+  const openBtn = document.getElementById('openBtn');
+  const openEnvelopeBtn = document.getElementById('openEnvelopeBtn');
+  const envelope = document.getElementById('envelope');
+  const slideImg = document.getElementById('slideImg');
+  const photoContainer = document.getElementById('photoContainer');
+  const msgEl = document.getElementById('msgEl');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  const gift = document.getElementById('gift');
+  const flowerStage = document.getElementById('flowerStage');
+  const rose = document.getElementById('rose');
+  const finalMsg = document.getElementById('finalMsg');
+
+  let idx = 0;
+  let openedEnvelope = false;
+
+  // show/hide helpers
+  function show(el){ el.classList.remove('hidden'); el.classList.add('visible'); }
+  function hide(el){ el.classList.remove('visible'); el.classList.add('hidden'); }
+
+  // start -> envelope
+  openBtn.addEventListener('click', () => {
+    hide(intro);
+    // small delay then show envelope screen
+    setTimeout(()=> show(envelopeScene), 260);
+  });
+
+  // open envelope; also a visible open button below envelope
+  function doOpenEnvelope(){
+    if(openedEnvelope) return;
+    envelope.classList.add('open');
+    openedEnvelope = true;
+    // reveal slide content after flap animation
+    setTimeout(()=>{
+      hide(envelopeScene);
+      show(slidesScreen);
+      showSlide(0);
+    }, 850);
+  }
+  envelope.addEventListener('click', doOpenEnvelope);
+  openEnvelopeBtn.addEventListener('click', doOpenEnvelope);
+
+  // slideshow functions
+  function showSlide(i){
+    if(i < 0) i = slides.length - 1;
+    if(i >= slides.length) i = slides.length - 1;
+    idx = i;
+
+    // update the slide image / message container inside envelope (also update big slides screen)
+    // set envelope inner (used when envelope is open)
+    slideImg.src = slides[idx].img;
+    // animate photo & message in envelope card
+    photoContainer.classList.remove('show');
+    msgEl.classList.remove('show');
+    // ensure small delay for fade feel
+    setTimeout(()=>{
+      photoContainer.classList.add('show');
+      msgEl.textContent = slides[idx].msg;
+      msgEl.classList.add('show');
+    }, 220);
+
+    // update main slideshow area
+    const allSlides = document.querySelectorAll('.slide');
+    allSlides.forEach((s, si)=> s.classList.toggle('active', si === idx));
+  }
+
+  prevBtn.addEventListener('click', (e)=>{ e.stopPropagation(); if(idx > 0) showSlide(idx - 1); });
+  nextBtn.addEventListener('click', (e)=>{ e.stopPropagation(); 
+    if(idx < slides.length - 1) {
+      showSlide(idx + 1);
+    } else {
+      // last slide -> transition to final gift scene
+      hide(slidesScreen);
+      setTimeout(()=> show(finalScreen), 360);
+    }
+  });
+
+  // clicking photo or message advances
+  photoContainer.addEventListener('click', ()=> {
+    if(idx < slides.length - 1) {
+      showSlide(idx + 1);
+    } else {
+      // last -> go to final
+      hide(slidesScreen);
+      setTimeout(()=> show(finalScreen), 360);
+    }
+  });
+  msgEl.addEventListener('click', ()=> {
+    if(idx < slides.length - 1) showSlide(idx + 1);
+    else { hide(slidesScreen); setTimeout(()=> show(finalScreen), 360); }
+  });
+
+  // final gift interaction: tap gift to bloom rose
+  gift.addEventListener('click', ()=> {
+    // animate gift 'open' (push upward briefly) and reveal rose
+    gift.style.transform = 'translateY(-10px) scale(.98)';
+    setTimeout(()=> gift.style.transform = '', 220);
+
+    // reveal flower stage and animate layered petals
+    flowerStage.classList.add('show');
+    // stagger petal reveals via opacity/transform using small timeouts
+    setTimeout(()=> { rose.classList.add('show'); }, 200);
+    setTimeout(()=> { finalMsg.classList.add('show'); }, 900);
+
+    // optionally add gentle bobbing to rose
+    rose.animate([{transform:'translateY(0)'},{transform:'translateY(-6px)'},{transform:'translateY(0)'}], {duration:2400,iterations:Infinity, easing:'ease-in-out'});
+  });
+
+  // keyboard navigation for slideshow screens
+  document.addEventListener('keydown', (e)=>{
+    if(document.querySelector('#slidesScreen').classList.contains('visible')){
+      if(e.key === 'ArrowRight') {
+        if(idx < slides.length - 1) showSlide(idx + 1); else { hide(slidesScreen); setTimeout(()=> show(finalScreen), 360); }
+      }
+      if(e.key === 'ArrowLeft') { if(idx > 0) showSlide(idx - 1); }
+    }
+  });
+
+  // initial state: show intro visible (already)
+  // (Make sure images exist — missing images will still show messages.)
+
+</script>
+</body>
+</html>
